@@ -1,30 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR" class="h-full">
   <head>
-    <title><%= content_for(:title) || "Interview Sim" %></title>
+    <title><%= content_for(:title) || "InterviewSim" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Interview Sim">
+    <meta name="application-name" content="InterviewSim">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="min-h-full bg-zinc-50 text-zinc-900 antialiased">
+    <header class="border-b border-zinc-200 bg-white">
+      <div class="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        <%= link_to root_path, class: "flex items-center gap-2 text-sm font-semibold text-zinc-900" do %>
+          <svg viewBox="0 0 24 24" class="size-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 12h18M3 6h18M3 18h12" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          InterviewSim
+        <% end %>
+
+        <% if authenticated? %>
+          <div class="flex items-center gap-3 text-sm">
+            <span class="text-zinc-500"><%= Current.user&.name&.split&.first %></span>
+            <%= button_to "Sair", session_path, method: :delete,
+                  class: "rounded-md border border-zinc-200 px-2.5 py-1 text-xs text-zinc-600 hover:bg-zinc-50" %>
+          </div>
+        <% else %>
+          <div class="flex items-center gap-2 text-sm">
+            <%= link_to "Entrar", new_session_path, class: "text-zinc-600 hover:text-zinc-900" %>
+            <%= link_to "Criar conta", new_registration_path,
+                  class: "rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500" %>
+          </div>
+        <% end %>
+      </div>
+    </header>
+
+    <% flash.each do |type, msg| %>
+      <div class="mx-auto max-w-5xl px-4 pt-3">
+        <p class="rounded-md border <%= type.to_s == 'alert' ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-emerald-300 bg-emerald-50 text-emerald-700' %> px-3 py-2 text-sm">
+          <%= msg %>
+        </p>
+      </div>
+    <% end %>
+
+    <main class="mx-auto max-w-5xl px-4 py-8">
       <%= yield %>
     </main>
   </body>

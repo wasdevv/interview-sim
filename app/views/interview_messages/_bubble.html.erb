@@ -1,0 +1,22 @@
+<li id="<%= dom_id(message) %>" class="flex items-end gap-2 <%= message.role_user? ? 'justify-end' : 'justify-start' %>">
+  <% unless message.role_user? %>
+    <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700" aria-hidden="true">AI</span>
+  <% end %>
+
+  <div class="max-w-[75%]">
+    <div class="rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line
+                <%= message.role_user? ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-zinc-100 text-zinc-900 rounded-bl-sm' %>"
+         id="<%= dom_id(message, :content) %>">
+      <% if message.content.present? %>
+        <%= message.content %>
+      <% else %>
+        <span class="inline-flex gap-1 text-zinc-400">
+          <span class="size-1.5 animate-bounce rounded-full bg-zinc-400"></span>
+          <span class="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:120ms]"></span>
+          <span class="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:240ms]"></span>
+        </span>
+      <% end %>
+    </div>
+    <p class="mt-0.5 px-1 text-[10px] text-zinc-400"><%= l(message.created_at, format: :short) %></p>
+  </div>
+</li>
