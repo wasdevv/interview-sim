@@ -52,9 +52,9 @@ Rails.application.configure do
   # Highlight code that enqueued background job in logs.
   config.active_job.verbose_enqueue_logs = true
 
-  # Dev usa async (in-process), evita precisar das tabelas multi-DB do Solid Queue.
-  # Em produção continua solid_queue (config padrão do Rails 8).
-  config.active_job.queue_adapter = :async
+  # Use Solid Queue em dev tbm (bin/jobs funciona).
+  # Tabelas vivem no DB primário via migration LoadSolidQueueSchema.
+  config.active_job.queue_adapter = :solid_queue
 
   # Highlight code that triggered redirect in logs.
   config.action_dispatch.verbose_redirect_logs = true
