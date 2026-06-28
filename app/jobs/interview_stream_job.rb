@@ -30,6 +30,10 @@ class InterviewStreamJob < ApplicationJob
       placeholder.update!(content: "[erro ao gerar resposta — tente novamente em alguns segundos]")
       broadcast_replace(session, target_id, placeholder.content)
     end
+  rescue Interviewer::Claude::MissingApiKey => e
+    placeholder&.update!(content: "[ANTHROPIC_API_KEY não configurada — copie .env.example pra .env e reinicie bin/jobs]")
+    broadcast_replace(session, target_id, placeholder.content) if placeholder
+    Rails.logger.error("[InterviewStreamJob] #{e.message}")
   end
 
   private

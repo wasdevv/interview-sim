@@ -7,8 +7,13 @@ module Interviewer
     MODEL = "claude-haiku-4-5"
     MAX_TOKENS = 1024
 
+    class MissingApiKey < StandardError; end
+
     def self.client
-      @client ||= Anthropic::Client.new(api_key: ENV.fetch("ANTHROPIC_API_KEY"))
+      key = ENV["ANTHROPIC_API_KEY"].to_s.strip
+      raise MissingApiKey, "ANTHROPIC_API_KEY não está setado (veja .env.example)" if key.empty?
+
+      @client ||= Anthropic::Client.new(api_key: key)
     end
 
     def self.stream(session:, &block)

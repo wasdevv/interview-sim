@@ -70,6 +70,9 @@ group :development do
   gem "web-console"
 end
 
+# Carrega .env em dev/test (ANTHROPIC_API_KEY etc).
+gem "dotenv-rails", groups: %i[development test]
+
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
