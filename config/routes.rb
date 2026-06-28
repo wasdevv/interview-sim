@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resource :registration, only: %i[new create]
 
-  resources :interview_sessions, only: %i[index new create show] do
+  resources :interview_sessions, only: %i[index new create show destroy] do
     resources :messages, only: :create, controller: "interview_messages"
     member do
       patch :abandon

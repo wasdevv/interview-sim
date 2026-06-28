@@ -49,10 +49,13 @@
   <% end %>
 </div>
 
-<% if @session.status_running? %>
-  <div class="mt-4 text-right">
+<div class="mt-4 flex items-center justify-end gap-4">
+  <% if @session.status_running? %>
     <%= button_to "Encerrar agora", abandon_interview_session_path(@session), method: :patch,
           form: { data: { turbo_confirm: "Encerrar essa entrevista?" } },
           class: "text-xs text-zinc-500 underline hover:text-rose-600" %>
-  </div>
-<% end %>
+  <% end %>
+  <%= button_to "Apagar entrevista", interview_session_path(@session), method: :delete,
+        form: { data: { turbo_confirm: "Apagar essa entrevista? Não dá pra desfazer." } },
+        class: "text-xs text-rose-600 underline hover:text-rose-700" %>
+</div>
