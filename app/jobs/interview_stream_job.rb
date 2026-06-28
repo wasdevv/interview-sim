@@ -11,7 +11,8 @@ class InterviewStreamJob < ApplicationJob
     session = InterviewSession.find(session_id)
     return unless session.status_running?
 
-    placeholder = session.messages.create!(role: :assistant, content: "")
+    placeholder = session.messages.build(role: :assistant, content: "")
+    placeholder.save(validate: false)
     target_id   = ActionView::RecordIdentifier.dom_id(placeholder, :content)
     accumulated = +""
 
