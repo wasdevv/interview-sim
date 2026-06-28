@@ -38,8 +38,9 @@ module Interviewer
 
       final = stream.respond_to?(:get_final_message) ? stream.get_final_message : nil
       Result.success(:streamed, final)
-    rescue Anthropic::APIStatusError => e
-      Result.failure(:api_error, [ e.message ])
+    rescue Anthropic::Errors::APIError => e
+      Rails.logger.error("[Interviewer::Claude] #{e.class}: #{e.message}")
+      Result.failure(:api_error, [ "#{e.class.name.demodulize}: #{e.message}" ])
     end
   end
 end
