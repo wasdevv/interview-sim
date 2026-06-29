@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     resources :messages, only: :create, controller: "interview_messages"
     member do
       patch :abandon
+      post  :feedback
     end
   end
 

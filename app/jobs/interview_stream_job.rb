@@ -26,6 +26,7 @@ class InterviewStreamJob < ApplicationJob
       if accumulated.start_with?(END_MARKER) || accumulated.include?("\n#{END_MARKER}")
         session.update!(status: :completed, completed_at: Time.current)
         broadcast_status(session)
+        GenerateFeedbackJob.perform_later(session.id)
       end
     else
       placeholder.update!(content: "[erro ao gerar resposta — tente novamente em alguns segundos]")

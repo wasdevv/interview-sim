@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class InterviewSessionsController < ApplicationController
-  before_action :set_session, only: %i[show abandon destroy]
+  before_action :set_session, only: %i[show abandon destroy feedback]
 
   def index
     @sessions = Current.user.interview_sessions.recent.limit(20)
@@ -31,12 +31,18 @@ class InterviewSessionsController < ApplicationController
 
   def abandon
     @session.update!(status: :abandoned, completed_at: Time.current)
-    redirect_to interview_sessions_path, notice: "Entrevista encerrada."
+    GenerateFeedbackJob.perform_later(@session.id) if @session.messages.role_user.exists?
+    redirect_to interview_session_path(@session), notice: "Entrevista encerrada."
   end
 
   def destroy
     @session.destroy!
     redirect_to interview_sessions_path, notice: "Entrevista apagada.", status: :see_other
+  end
+
+  def feedback
+    GenerateFeedbackJob.perform_later(@session.id)
+    redirect_to interview_session_path(@session), notice: "Gerando feedback…"
   end
 
   private
