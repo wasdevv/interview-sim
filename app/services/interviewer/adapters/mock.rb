@@ -12,17 +12,47 @@ module Interviewer
         "Antes da gente entrar em tópicos técnicos — se apresenta brevemente e cita um projeto recente que tenha te ensinado algo novo."
       ].freeze
 
-      EXPLORATION = [
-        "Você citou que trabalhou com algum sistema crítico — me conta de uma vez que algo quebrou em produção. Como vocês descobriram, debugaram e qual foi a correção?",
-        "Quando você precisa escolher entre consistência forte e disponibilidade num sistema distribuído, como você raciocina? Pode usar um exemplo do seu trabalho.",
+      CONCEPTUAL = [
+        "Vamos pra um conceito básico: o que é uma transação em banco de dados e quando você usa?",
+        "Me explica em poucas palavras o que diferencia HTTP de HTTPS além do 'S' de seguro.",
+        "O que é um índice em SQL? Em que situações um índice pode até atrapalhar a performance?",
+        "Me explica o que é idempotência em APIs. Por que isso importa especialmente em endpoints de pagamento?",
+        "Conta o que significa ACID. Pode dar 1 exemplo prático de cada letra.",
+        "Qual a diferença prática entre cache HTTP (Cache-Control) e cache de aplicação (Redis/Memcached)?",
+        "Me explica a diferença entre GET, POST, PUT e PATCH numa API REST — quando escolher cada um.",
+        "O que é um deadlock em código concorrente? Como você detecta e como evita?",
+        "Explica o N+1 query problem com um exemplo. Como você identifica e resolve no seu stack atual?",
+        "O que é dependency injection? Quando vale a pena e quando complica mais do que ajuda?",
+        "Diferença prática entre processo e thread. Quando você escolheria um ou outro?",
+        "Me explica eventual consistency. Em que tipos de sistema ela é aceitável e em quais não é?",
+        "Qual a diferença entre autenticação e autorização? Cita 1 ferramenta/protocolo pra cada.",
+        "O que é uma race condition? Conta um exemplo (real ou hipotético) e como evitar."
+      ].freeze
+
+      PRACTICAL = [
+        "Agora algo mais prático: como você implementaria paginação numa API que retorna 10M de registros?",
+        "Você precisa fazer retry de uma chamada externa que pode falhar intermitentemente. Como você desenha isso sem causar tempestade de requests?",
+        "Como você projetaria um sistema de notificações por email garantindo at-least-once delivery?",
+        "Imagina um endpoint que vai ser chamado 10k vezes por segundo. Como você protege a infra de cair?",
+        "Como você faria pra adicionar uma coluna NOT NULL numa tabela com 100M de rows em produção, zero downtime?",
+        "Como você invalidaria cache distribuído quando o dado fonte muda? Quais armadilhas?",
+        "Você precisa fazer full-text search em 1M de documentos. Quais opções considera, quais os trade-offs?",
+        "Como você desenharia um sistema de feature flags pra fazer rollout gradual sem deploy?",
+        "Pra deletar 50M de rows antigas em prod, qual sua abordagem? Quais cuidados?",
+        "Como você detectaria que uma versão nova do seu serviço está com regressão de performance logo após o deploy?"
+      ].freeze
+
+      SCENARIO = [
+        "Conta de uma vez que algo quebrou em produção. Como vocês descobriram, debugaram e qual foi a correção?",
         "Me explica uma decisão de arquitetura que você defendeu mas o time inicialmente discordou. O que você fez pra alinhar?",
-        "Como você aborda performance numa API que está respondendo lento? Quais ferramentas e métricas você usa primeiro?",
         "Conta uma situação onde você teve que dizer 'não' pra uma feature ou request. Como você comunicou e o que aconteceu?",
         "Se você tivesse que reescrever um sistema legado do zero, mas só pudesse trocar 20% do código, em que você focaria?",
-        "Me explica como você pensa em testes — quando vale escrever teste de integração vs unitário vs sistema?",
         "Qual foi a última vez que você aprendeu uma tecnologia nova fora do trabalho? O que motivou e como você abordou?",
         "Se você visse um colega entregando código com problemas de qualidade consistentemente, como você abordaria?",
-        "Conta de uma vez que você reduziu complexidade de um sistema — pode ser deletando código, simplificando arquitetura ou removendo dependência."
+        "Conta de uma vez que você reduziu complexidade de um sistema — pode ser deletando código, simplificando arquitetura ou removendo dependência.",
+        "Me conta um conflito técnico que você teve com outro engenheiro. Como vocês chegaram numa solução?",
+        "Se você tivesse que liderar um projeto novo do zero amanhã, quais 3 decisões técnicas você travaria primeiro?",
+        "Conta de um trade-off complicado que você teve que fazer recentemente. Como você decidiu?"
       ].freeze
 
       CLOSE = [
@@ -93,15 +123,31 @@ module Interviewer
 
       private
 
+      PHASES = [
+        [ :warmup,      WARMUP,      1 ],
+        [ :conceptual,  CONCEPTUAL,  3 ],
+        [ :practical,   PRACTICAL,   3 ],
+        [ :scenario,    SCENARIO,    3 ],
+        [ :close_first, CLOSE,       1 ],
+        [ :close_last,  CLOSE,       1 ]
+      ].freeze
+
       def pick_text
         turn = @session.messages.role_user.count
-        case turn
-        when 0 then sample(WARMUP, seed_offset: 0)
-        when 1..(EXPLORATION.size) then sample(EXPLORATION, seed_offset: turn)
-        when (EXPLORATION.size + 1) then CLOSE[0]
-        when (EXPLORATION.size + 2) then CLOSE[1]
-        else END_MESSAGE
+
+        cumulative = 0
+        PHASES.each_with_index do |(phase, pool, count), phase_idx|
+          if turn < cumulative + count
+            offset = turn - cumulative
+            return CLOSE[0] if phase == :close_first
+            return CLOSE[1] if phase == :close_last
+
+            return sample(pool, seed_offset: phase_idx * 7 + offset)
+          end
+          cumulative += count
         end
+
+        END_MESSAGE
       end
 
       def sample(pool, seed_offset:)
