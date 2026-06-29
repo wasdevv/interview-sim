@@ -49,6 +49,10 @@
   <% end %>
 </div>
 
+<div id="<%= dom_id(@session, :feedback) %>">
+  <%= render "interview_sessions/feedback", session: @session %>
+</div>
+
 <div class="mt-4 flex items-center justify-end gap-4">
   <% if @session.status_running? %>
     <%= button_to "Encerrar agora", abandon_interview_session_path(@session), method: :patch,

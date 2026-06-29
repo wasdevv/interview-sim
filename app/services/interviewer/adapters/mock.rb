@@ -36,6 +36,10 @@ module Interviewer
         new(session).stream(&block)
       end
 
+      def self.feedback(session)
+        new(session).feedback
+      end
+
       def initialize(session)
         @session = session
       end
@@ -47,6 +51,44 @@ module Interviewer
           block.call(chunk)
         end
         Result.success(:streamed)
+      end
+
+      def feedback
+        user_msgs = @session.messages.role_user.to_a
+        return "Sem respostas suficientes pra análise." if user_msgs.empty?
+
+        total = user_msgs.size
+        avg_words = (user_msgs.sum { |m| m.content.split.size }.to_f / total).round
+        short = user_msgs.count { |m| m.content.split.size < 30 }
+        nothing = user_msgs.count { |m| m.content.match?(/\A(n[aã]o|nada|nenhum[ao]?|nunca)\.?\z/i) }
+
+        <<~MD
+          ## Feedback automático (backend mock)
+
+          > Análise por template estático. Pra crítica personalizada por IA, troque `INTERVIEWER_BACKEND=claude` no `.env`.
+
+          ### Métricas da sessão
+
+          - Cargo: **#{@session.role}** (nível: #{@session.level})
+          - Respostas dadas: **#{total}**
+          - Média de palavras por resposta: **#{avg_words}**
+          - Respostas curtas (<30 palavras): **#{short}** de #{total}
+          - Respostas vazias ("nada", "não", "nenhuma"): **#{nothing}**
+
+          ### Padrões observáveis
+
+          #{padroes(short, total, nothing, avg_words)}
+
+          ### Próximos passos sugeridos
+
+          1. **Storytelling com STAR+R**: cada resposta com Situação → Tarefa → Ação → Resultado mensurável → Reflexão sobre o que aprendeu.
+          2. **Fundamentos**: revisar sistemas distribuídos (CAP, ACID, eventual consistency), performance (profiling, EXPLAIN ANALYZE, APM) e práticas de teste.
+          3. **Fim da entrevista**: sempre tenha 2-3 perguntas guardadas (cultura, processo de release, métricas de sucesso pro cargo).
+
+          ### Como conseguir feedback real
+
+          Edita `.env` pra `INTERVIEWER_BACKEND=claude` + `ANTHROPIC_API_KEY=sk-ant-...` e gera de novo. Aí cada resposta vai ser analisada individualmente com nota e sugestão concreta.
+        MD
       end
 
       private
@@ -69,6 +111,15 @@ module Interviewer
 
       def chunks_for(text)
         text.chars.each_slice(CHUNK_SIZE).map(&:join)
+      end
+
+      def padroes(short, total, nothing, avg_words)
+        notes = []
+        notes << "- ⚠️ **#{short} de #{total} respostas curtas demais** — respostas com <30 palavras raramente comunicam contexto, ação e resultado." if short > total / 2
+        notes << "- ⚠️ **#{nothing} resposta(s) sem conteúdo** (\"nada\", \"não houve\", etc) — entrevistador interpreta como falta de exemplo ou desinteresse." if nothing.positive?
+        notes << "- 📏 **Média de #{avg_words} palavras por resposta** — pleno+ costuma usar 80-150 palavras pra resposta técnica completa." if avg_words < 50
+        notes << "- ✅ Respostas com boa extensão na média — bom sinal de articulação." if avg_words >= 80 && short < total / 3
+        notes.empty? ? "- Sem padrões claros — sessão equilibrada." : notes.join("\n")
       end
     end
   end
